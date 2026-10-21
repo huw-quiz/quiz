@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>労組クイズ検定</title>
+
+<style>
+:root{
+ --main:#2563eb;
+ --ok:#16a34a;
+ --ng:#dc2626;
+ --bg:#f4f6f9;
+ --card:#ffffff;
+ --text:#222;
+}
+
+@media (prefers-color-scheme: dark){
+ :root{
+  --bg:#111827;
+  --card:#1f2937;
+  --text:#f3f4f6;
+ }
+}
+
+body{
+ margin:0;
+ font-family:sans-serif;
+ background:var(--bg);
+ color:var(--text);
+}
+
+.container{
+ max-width:700px;
+ margin:auto;
+ padding:20px;
+}
+
+.card{
+ background:var(--card);
+ border-radius:16px;
+ padding:20px;
+ box-shadow:0 2px 10px rgba(0,0,0,.15);
+}
+
+h1{
+ text-align:center;
+}
+
+.progress{
+ height:12px;
+ background:#ddd;
+ border-radius:999px;
+ overflow:hidden;
+ margin-bottom:15px;
+}
+
+.bar{
+ height:100%;
+ width:0%;
+ background:var(--main);
+ transition:.3s;
+}
+
+.question{
+ font-size:1.2rem;
+ font-weight:bold;
+ margin:20px 0;
+}
+
+.choice{
+ width:100%;
+ padding:16px;
+ margin:8px 0;
+ border:none;
+ border-radius:12px;
+ background:#e5e7eb;
+ font-size:1rem;
+ text-align:left;
+ cursor:pointer;
+}
+
+.choice:hover{
+ opacity:.9;
+}
+
+.correct{
+ background:#dcfce7;
+}
+
+.wrong{
+ background:#fee2e2;
+}
+
+.result{
+ margin-top:15px;
+ font-weight:bold;
+ font-size:1.1rem;
+}
+
+.explain{
+ margin-top:15px;
+ background:#eff6ff;
+ padding:15px;
+ border-radius:12px;
+ display:none;
+ line-height:1.6;
+}
+
+.btn{
+ width:100%;
+ padding:16px;
+ margin-top:15px;
+ border:none;
+ border-radius:12px;
+ background:var(--main);
+ color:white;
+ font-size:1rem;
+ cursor:pointer;
+}
+
+.rank{
+ font-size:3rem;
+ font-weight:bold;
+ color:var(--main);
+}
+
+.center{
+ text-align:center;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+<div class="card" id="app">
+
+<h1>🎓 労組クイズ検定</h1>
+
+<div class="progress">
+<div class="bar" id="bar"></div>
+</div>
+
+<div id="count"></div>
+
+<div id="question" class="question"></div>
+
+<div id="choices"></div>
+
+<div id="result" class="result"></div>
+
+<div id="explain" class="explain"></div>
+
+<button class="btn" id="nextBtn" style="display:none">
+次の問題 ▶
+</button>
+
+</div>
+</div>
+
+<script>
+
+const quiz = [
+
+{
+q:"36協定の原則的な時間外労働の上限は？",
+c:["月45時間・年360時間","月60時間・年720時間","年960時間","上限なし"],
+a:0,
+e:"36協定を締結していても、原則として月45時間・年360時間が上限です。"
+},
+{
+q:"労働三権に含まれないものは？",
+c:["団結権","団体交渉権","就業保障権","団体行動権"],
+a:2,
+e:"労働三権は団結権・団体交渉権・団体行動権です。"
+},
+{
+q:"有給休暇の原則付与時期は？",
+c:["入社時","3か月後","6か月後","1年後"],
+a:2,
+e:"継続勤務6か月かつ出勤率8割以上で付与されます。"
+},
+{
+q:"組合の目的として最も適切なものは？",
+c:["利益追求","採用活動","労働条件向上","販売促進"],
+a:2,
+e:"労働条件の維持・向上が組合の基本的な役割です。"
+},
+{
+q:"ワークライフバランス改善の目的は？",
+c:["残業固定化","健康維持","評価廃止","人件費削減"],
+a:1,
+e:"健康維持と持続可能な働き方の実現を目指します。"
+},
+{
+q:"Honda創業者は？",
+c:["本田宗一郎","豊田喜一郎","松下幸之助","井深大"],
+a:0,
+e:"本田宗一郎氏がHondaの創業者です。"
+},
+{
+q:"EVとは？",
+c:["Eco Vehicle","Electric Vehicle","Energy Vehicle","Evolution Vehicle"],
+a:1,
+e:"Electric Vehicle＝電気自動車です。"
+},
+{
+q:"日本の法定労働時間は1日何時間？",
+c:["7時間","8時間","9時間","10時間"],
+a:1,
+e:"原則として1日8時間です。"
+},
+{
+q:"日本の法定労働時間は週何時間？",
+c:["35","40","45","48"],
+a:1,
+e:"原則として週40時間です。"
+},
+{
+q:"カスタマーハラスメントとは？",
+c:["顧客による不当な迷惑行為","交通違反","情報漏洩","残業超過"],
+a:0,
+e:"顧客等からの著しい迷惑行為を指します。"
+},
+{
+q:"日本国憲法施行年は？",
+c:["1945","1946","1947","1950"],
+a:2,
+e:"1947年5月3日に施行されました。"
+},
+{
+q:"人口が最も多い都道府県は？",
+c:["神奈川県","大阪府","東京都","愛知県"],
+a:2,
+e:"東京都が最多です。"
+},
+{
+q:"年間休日120日とは？",
+c:["有給日数","会社休日数","残業時間","法定休日数"],
+a:1,
+e:"会社が定める年間休日数です。"
+},
+{
+q:"日本最大の都道府県は？",
+c:["長野県","岩手県","北海道","福島県"],
+a:2,
+e:"面積最大は北海道です。"
+},
+{
+q:"参議院議員の任期は？",
+c:["4年","5年","6年","8年"],
+a:2,
+e:"参議院議員の任期は6年です。"
+},
+{
+q:"労働安全衛生法の目的は？",
+c:["利益向上","健康確保","販促強化","採用強化"],
+a:1,
+e:"労働者の安全と健康を守ることです。"
+},
+{
+q:"有給休暇取得時の賃金は？",
+c:["支給無し","半額","通常支給","減額"],
+a:2,
+e:"通常の賃金が支払われます。"
+},
+{
+q:"Hondaの代表的二輪車は？",
+c:["スーパーカブ","プリウス","ジムニー","N700S"],
+a:0,
+e:"世界的ベストセラーとして有名です。"
+},
+{
+q:"組合活動で最も重要なものは？",
+c:["執行部判断","会社判断","組合員の声","慣例"],
+a:2,
+e:"組合活動の原点は組合員の声です。"
+},
+{
+q:"1年は何か月？",
+c:["10","11","12","13"],
+a:2,
+e:"1年は12か月です。"
+}
+
+];
+
+let current=0;
+let score=0;
+
+const q=document.getElementById("question");
+const c=document.getElementById("choices");
+const r=document.getElementById("result");
+const ex=document.getElementById("explain");
+const next=document.getElementById("nextBtn");
+const count=document.getElementById("count");
+const bar=document.getElementById("bar");
+
+function draw(){
+
+const item=quiz[current];
+
+count.innerHTML=`問題 ${current+1} / ${quiz.length}`;
+bar.style.width=((current)/quiz.length*100)+"%";
+
+q.textContent=item.q;
+
+c.innerHTML="";
+r.innerHTML="";
+ex.style.display="none";
+next.style.display="none";
+
+item.c.forEach((text,index)=>{
+
+const btn=document.createElement("button");
+
+btn.className="choice";
+btn.textContent=text;
+
+btn.onclick=()=>{
+
+document.querySelectorAll(".choice").forEach(x=>{
+x.disabled=true;
+});
+
+if(index===item.a){
+
+score++;
+
+btn.classList.add("correct");
+
+r.innerHTML="✅ 正解";
+
+}else{
+
+btn.classList.add("wrong");
+
+r.innerHTML=
+`❌ 不正解<br>正解：${item.c[item.a]}`;
+
+}
+
+ex.innerHTML=
+`<strong>解説</strong><br>${item.e}`;
+
+ex.style.display="block";
+next.style.display="block";
+
+};
+
+c.appendChild(btn);
+
+});
+
+}
+
+next.onclick=()=>{
+
+current++;
+
+if(current>=quiz.length){
+
+let rank="D";
+
+if(score>=18) rank="S";
+else if(score>=15) rank="A";
+else if(score>=12) rank="B";
+else if(score>=8) rank="C";
+
+document.getElementById("app").innerHTML=`
+
+<h1>🏆 結果発表</h1>
+
+<div class="center">
+
+<p>${quiz.length}問中</p>
+
+<h2>${score}点</h2>
+
+<div class="rank">${rank}</div>
+
+<p>
+${rank==="S"?"労組マスター":
+rank==="A"?"かなり詳しい":
+rank==="B"?"合格":
+rank==="C"?"もう一歩":
+"再チャレンジ"}
+</p>
+
+<button class="btn"
+onclick="location.reload()">
+もう一度挑戦
+</button>
+
+</div>
+
+`;
+
+return;
+
+}
+
+draw();
+
+};
+
+draw();
+
+</script>
+
+</body>
+</html>
